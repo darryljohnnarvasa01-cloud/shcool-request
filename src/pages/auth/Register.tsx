@@ -97,8 +97,7 @@ export function Register() {
               onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
               options={[
                 { label: 'Student', value: 'STUDENT' },
-                { label: 'Staff / Registrar', value: 'STAFF' },
-                { label: 'Administrator', value: 'ADMIN' },
+                { label: 'Staff', value: 'STAFF' },
               ]}
               required
             />

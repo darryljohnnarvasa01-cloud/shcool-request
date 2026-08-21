@@ -31,9 +31,17 @@ export function Login() {
         return;
       }
       
+      const userData = userDoc.data();
+      if (userData.status === 'DISABLED' || userData.status === 'SUSPENDED') {
+        await signOut(auth);
+        setError(`Your account has been ${userData.status.toLowerCase()}. Please contact an administrator.`);
+        setLoading(false);
+        return;
+      }
+
       await refreshUserData();
-      const role = userDoc.data().role;
-      navigate(role === 'STUDENT' ? '/student' : role === 'STAFF' ? '/staff' : '/admin');
+      const role = userData.role;
+      navigate(role === 'STUDENT' ? '/student' : (role === 'STAFF' || role === 'REGISTRAR') ? '/staff' : '/admin');
     } catch (err: any) {
       if (err.code !== 'auth/popup-closed-by-user') {
         setError(err.message || 'Failed to login');

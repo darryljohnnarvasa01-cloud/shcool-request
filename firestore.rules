@@ -13,16 +13,35 @@ service cloud.firestore {
     function isStaff() {
       return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'STAFF';
     }
+
+    function isRegistrar() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'REGISTRAR';
+    }
     
     function isAdmin() {
       return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
     }
 
+    function isStaffOrHigher() {
+      return isStaff() || isRegistrar() || isAdmin();
+    }
+
     match /users/{userId} {
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin() || isStaff());
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow delete: if isAdmin();
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isStaffOrHigher());
+      
+      allow create: if isAuthenticated() && request.auth.uid == userId
+                    && request.resource.data.role in ['STUDENT', 'STAFF']
+                    && request.resource.data.status == 'ACTIVE';
+                    
+      allow update: if isAuthenticated() && (
+                      (request.auth.uid == userId 
+                        && request.resource.data.role == resource.data.role
+                        && request.resource.data.status == resource.data.status) 
+                      || 
+                      (isAdmin() && request.auth.uid != userId)
+                    );
+                    
+      allow delete: if false; // Users shouldn't be deleted, only marked as disabled
     }
 
     match /documentTypes/{docId} {
@@ -31,15 +50,15 @@ service cloud.firestore {
     }
 
     match /requests/{requestId} {
-      allow read: if isAuthenticated() && (isStaff() || isAdmin() || resource.data.studentUid == request.auth.uid);
+      allow read: if isAuthenticated() && (isStaffOrHigher() || resource.data.studentUid == request.auth.uid);
       allow create: if isAuthenticated() && request.resource.data.studentUid == request.auth.uid;
-      allow update: if isAuthenticated() && (isStaff() || isAdmin() || resource.data.studentUid == request.auth.uid);
+      allow update: if isAuthenticated() && (isStaffOrHigher() || resource.data.studentUid == request.auth.uid);
       allow delete: if isAdmin();
     }
 
     match /requestRequirements/{reqId} {
-      allow read: if isAuthenticated() && (isStaff() || isAdmin() || resource.data.studentUid == request.auth.uid);
-      allow create, update: if isAuthenticated() && (isStaff() || isAdmin() || request.resource.data.studentUid == request.auth.uid);
+      allow read: if isAuthenticated() && (isStaffOrHigher() || resource.data.studentUid == request.auth.uid);
+      allow create, update: if isAuthenticated() && (isStaffOrHigher() || request.resource.data.studentUid == request.auth.uid);
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.studentUid == request.auth.uid);
     }
 
@@ -57,7 +76,7 @@ service cloud.firestore {
 
     match /auditLogs/{logId} {
       allow read: if isAdmin();
-      allow create: if isAuthenticated();
+      allow create: if isAdmin();
       allow update, delete: if false;
     }
   }

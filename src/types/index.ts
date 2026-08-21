@@ -1,4 +1,6 @@
-export type Role = 'STUDENT' | 'STAFF' | 'ADMIN';
+export type Role = 'STUDENT' | 'STAFF' | 'REGISTRAR' | 'ADMIN';
+
+export type UserStatus = 'ACTIVE' | 'DISABLED' | 'SUSPENDED' | 'INACTIVE';
 
 export interface User {
   uid: string;
@@ -9,9 +11,12 @@ export interface User {
   course?: string;
   yearLevel?: string;
   contactNumber?: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: UserStatus;
   createdAt: number;
   updatedAt: number;
+  roleChangedAt?: number;
+  roleChangedBy?: string;
+  previousRole?: Role;
 }
 
 export interface DocumentType {
@@ -96,11 +101,13 @@ export interface Notification {
 
 export interface AuditLog {
   id: string;
-  userUid: string;
-  userName: string;
   action: string;
   targetType: string;
   targetId: string;
-  details: string;
+  performedBy: string;
+  performedByName: string;
+  previousRole?: Role;
+  newRole?: Role;
   timestamp: number;
+  details: string;
 }
