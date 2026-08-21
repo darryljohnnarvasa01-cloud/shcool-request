@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as FirebaseUser, onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase/firebase';
+import { auth } from '../firebase/firebase';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -19,16 +18,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (uid: string) => {
+  const fetchUserData = async (user: FirebaseUser) => {
     try {
-      const userDoc = await getDoc(doc(db, 'users', uid));
-      if (userDoc.exists()) {
-        setUserData(userDoc.data() as User);
+      const token = await user.getIdToken();
+      const response = await fetch('/api/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data);
       } else {
         setUserData(null);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
+      setUserData(null);
     }
   };
 
@@ -36,13 +42,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        await fetchUserData(user.uid);
+        await fetchUserData(user);
       } else {
         setUserData(null);
       }
       setLoading(false);
     });
-
     return unsubscribe;
   }, []);
 
@@ -52,7 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUserData = async () => {
     if (currentUser) {
-      await fetchUserData(currentUser.uid);
+      await fetchUserData(currentUser);
     }
   };
 

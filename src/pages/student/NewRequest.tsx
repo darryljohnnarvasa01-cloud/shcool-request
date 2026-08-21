@@ -189,7 +189,7 @@ export function NewRequest() {
               label="Select Document Type"
               value={formData.documentTypeId}
               onChange={e => setFormData({ ...formData, documentTypeId: e.target.value })}
-              options={docTypes.map(d => ({ label: `${d.name} ($${d.fee} - ${d.processingTime} days)`, value: d.id }))}
+              options={docTypes.map(d => ({ label: `${d.name} (₱${d.fee} - ${d.processingTime} days)`, value: d.id }))}
               required
             />
 

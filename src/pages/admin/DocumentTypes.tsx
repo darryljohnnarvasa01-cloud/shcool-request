@@ -174,7 +174,7 @@ export function DocumentTypes() {
                 </div>
                 <div className="flex justify-between">
                   <span>Fee:</span>
-                  <span className="font-medium text-gray-900">${type.fee}</span>
+                  <span className="font-medium text-gray-900">₱{type.fee}</span>
                 </div>
                 <div>
                   <span className="block mb-1 font-medium text-gray-900">Requirements:</span>
